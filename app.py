@@ -14,10 +14,10 @@ Select one or more market indices and a date range to view a normalized comparis
 # Updated Index options (using ETF proxies where needed)
 INDEX_TICKERS = {
     'S&P 500 (SPY)': 'SPY',
-    'NASDAQ': '^IXIC',
-    'Dow Jones': '^DJI',
-    'Russell 2000': '^RUT',
-    'NYSE Composite': '^NYA'
+    'NASDAQ 100 (QQQ)': 'QQQ',
+    'Dow Jones (DIA)': 'DIA',
+    'Russell 2000 (IWM)': 'IWM',
+    'Total Market (VTI)': 'VTI'
 }
 
 # Sidebar for user inputs
