@@ -13,7 +13,7 @@ Select one or more market indices and a date range to view a normalized comparis
 
 # Index options (Yahoo Finance symbols)
 INDEX_TICKERS = {
-    'S&P 500': '^GSPC',
+    'S&P 500 (SPY)': 'SPY',
     'NASDAQ': '^IXIC',
     'Dow Jones': '^DJI',
     'Russell 2000': '^RUT',
