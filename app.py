@@ -11,7 +11,7 @@ st.markdown("""
 Select one or more market indices and a date range to view a normalized comparison of performance over time.
 """)
 
-# Index options (Yahoo Finance symbols)
+# Updated Index options (using ETF proxies where needed)
 INDEX_TICKERS = {
     'S&P 500 (SPY)': 'SPY',
     'NASDAQ': '^IXIC',
@@ -22,7 +22,11 @@ INDEX_TICKERS = {
 
 # Sidebar for user inputs
 st.sidebar.header("User Selections")
-selected_indices = st.sidebar.multiselect("Choose indices:", list(INDEX_TICKERS.keys()), default=['S&P 500', 'NASDAQ'])
+selected_indices = st.sidebar.multiselect(
+    "Choose indices:",
+    list(INDEX_TICKERS.keys()),
+    default=['S&P 500 (SPY)', 'NASDAQ']
+)
 start_date = st.sidebar.date_input("Start Date", value=date(2022, 1, 1))
 end_date = st.sidebar.date_input("End Date", value=date.today())
 
