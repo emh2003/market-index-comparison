@@ -20,13 +20,12 @@ INDEX_TICKERS = {
     'Total Market (VTI)': 'VTI'
 }
 
-# Sidebar for user inputs
-st.sidebar.header("User Selections")
 selected_indices = st.sidebar.multiselect(
     "Choose indices:",
     list(INDEX_TICKERS.keys()),
-    default=['S&P 500 (SPY)', 'NASDAQ']
+    default=['S&P 500 (SPY)', 'NASDAQ 100 (QQQ)']
 )
+
 start_date = st.sidebar.date_input("Start Date", value=date(2022, 1, 1))
 end_date = st.sidebar.date_input("End Date", value=date.today())
 
