@@ -11,7 +11,7 @@ st.markdown("""
 Select one or more market indices and a date range to view a normalized comparison of performance over time.
 """)
 
-# Updated Index options (using ETF proxies where needed)
+# ETF-based ticker mapping for better cloud compatibility
 INDEX_TICKERS = {
     'S&P 500 (SPY)': 'SPY',
     'NASDAQ 100 (QQQ)': 'QQQ',
@@ -20,16 +20,17 @@ INDEX_TICKERS = {
     'Total Market (VTI)': 'VTI'
 }
 
+# Sidebar for user inputs
+st.sidebar.header("User Selections")
 selected_indices = st.sidebar.multiselect(
     "Choose indices:",
     list(INDEX_TICKERS.keys()),
     default=['S&P 500 (SPY)', 'NASDAQ 100 (QQQ)']
 )
-
 start_date = st.sidebar.date_input("Start Date", value=date(2022, 1, 1))
 end_date = st.sidebar.date_input("End Date", value=date.today())
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def fetch_data(ticker, start, end):
     try:
         df = yf.download(ticker, start=start, end=end, threads=False)
@@ -41,27 +42,19 @@ def fetch_data(ticker, start, end):
         st.warning(f"No data returned for {ticker}.")
         return pd.Series(dtype=float)
 
-    if isinstance(df.columns, pd.MultiIndex):
-        try:
-            df = df[('Close', ticker)]
-        except KeyError:
-            st.error(f"Multi-index 'Close' not found for {ticker}. Columns: {df.columns.tolist()}")
-            return pd.Series(dtype=float)
+    if 'Adj Close' in df.columns:
+        df = df['Adj Close']
+    elif 'Close' in df.columns:
+        df = df['Close']
     else:
-        if 'Adj Close' in df.columns:
-            df = df['Adj Close']
-        elif 'Close' in df.columns:
-            df = df['Close']
-        else:
-            st.error(f"No valid price column for {ticker}. Columns: {df.columns.tolist()}")
-            return pd.Series(dtype=float)
+        st.error(f"No valid price column found in data for {ticker}.")
+        return pd.Series(dtype=float)
 
     return df.ffill().dropna()
 
 def normalize_series(series):
     return (series / series.iloc[0]) * 100
 
-# Fetch and display data
 if selected_indices:
     st.subheader("Normalized Performance Chart")
     fig = go.Figure()
@@ -93,10 +86,8 @@ if selected_indices:
         yaxis=dict(fixedrange=False),
         template="plotly_white"
     )
-
     st.plotly_chart(fig, use_container_width=True)
 
-    # Chart 2: Cumulative Returns
     st.subheader("Cumulative Returns Chart")
     fig_cum = go.Figure()
     for index, series in price_data.items():
@@ -119,7 +110,6 @@ if selected_indices:
     )
     st.plotly_chart(fig_cum, use_container_width=True)
 
-    # Chart 3: Rolling Volatility
     st.subheader("Rolling 20-Day Volatility")
     fig_vol = go.Figure()
     for index, series in price_data.items():
@@ -142,7 +132,6 @@ if selected_indices:
     )
     st.plotly_chart(fig_vol, use_container_width=True)
 
-    # Summary Table
     st.subheader("Performance Summary Table")
     summary_data = []
     for index, series in price_data.items():
@@ -163,11 +152,9 @@ if selected_indices:
     summary_df = pd.DataFrame(summary_data)
     st.dataframe(summary_df)
 
-    # Download summary as CSV
     csv_summary = summary_df.to_csv(index=False).encode('utf-8')
     st.download_button("Download Summary as CSV", data=csv_summary, file_name="performance_summary.csv", mime="text/csv")
 
-    # Option to export raw normalized data
     if st.checkbox("Show raw data"):
         combined_df = pd.DataFrame({index: normalize_series(fetch_data(INDEX_TICKERS[index], start_date, end_date)) for index in selected_indices})
         st.dataframe(combined_df)
