@@ -28,7 +28,11 @@ end_date = st.sidebar.date_input("End Date", value=date.today())
 
 @st.cache_data
 def fetch_data(ticker, start, end):
-    df = yf.download(ticker, start=start, end=end)
+    try:
+        df = yf.download(ticker, start=start, end=end, threads=False)
+    except Exception as e:
+        st.error(f"Failed to download data for {ticker}: {e}")
+        return pd.Series(dtype=float)
 
     if df.empty:
         st.warning(f"No data returned for {ticker}.")
