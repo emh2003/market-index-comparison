@@ -11,13 +11,13 @@ st.markdown("""
 Select one or more market indices and a date range to view a normalized comparison of performance over time.
 """)
 
-# ETF-based ticker mapping for better cloud compatibility
+# Index options (Yahoo Finance symbols)
 INDEX_TICKERS = {
-    'S&P 500 (SPY)': 'SPY',
-    'NASDAQ 100 (QQQ)': 'QQQ',
-    'Dow Jones (DIA)': 'DIA',
-    'Russell 2000 (IWM)': 'IWM',
-    'Total Market (VTI)': 'VTI'
+    'S&P 500': '^GSPC',
+    'NASDAQ': '^IXIC',
+    'Dow Jones': '^DJI',
+    'Russell 2000': '^RUT',
+    'NYSE Composite': '^NYA'
 }
 
 # Sidebar for user inputs
@@ -25,30 +25,33 @@ st.sidebar.header("User Selections")
 selected_indices = st.sidebar.multiselect(
     "Choose indices:",
     list(INDEX_TICKERS.keys()),
-    default=['S&P 500 (SPY)', 'NASDAQ 100 (QQQ)']
+    default=['S&P 500', 'NASDAQ']
 )
 start_date = st.sidebar.date_input("Start Date", value=date(2022, 1, 1))
 end_date = st.sidebar.date_input("End Date", value=date.today())
 
-@st.cache_data(show_spinner=False)
+@st.cache_data
 def fetch_data(ticker, start, end):
-    try:
-        df = yf.download(ticker, start=start, end=end, threads=False)
-    except Exception as e:
-        st.error(f"Failed to download data for {ticker}: {e}")
-        return pd.Series(dtype=float)
+    df = yf.download(ticker, start=start, end=end)
 
     if df.empty:
         st.warning(f"No data returned for {ticker}.")
         return pd.Series(dtype=float)
 
-    if 'Adj Close' in df.columns:
-        df = df['Adj Close']
-    elif 'Close' in df.columns:
-        df = df['Close']
+    if isinstance(df.columns, pd.MultiIndex):
+        try:
+            df = df[('Close', ticker)]
+        except KeyError:
+            st.error(f"Multi-index 'Close' not found for {ticker}. Columns: {df.columns.tolist()}")
+            return pd.Series(dtype=float)
     else:
-        st.error(f"No valid price column found in data for {ticker}.")
-        return pd.Series(dtype=float)
+        if 'Adj Close' in df.columns:
+            df = df['Adj Close']
+        elif 'Close' in df.columns:
+            df = df['Close']
+        else:
+            st.error(f"No valid price column for {ticker}. Columns: {df.columns.tolist()}")
+            return pd.Series(dtype=float)
 
     return df.ffill().dropna()
 
